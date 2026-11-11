@@ -2,7 +2,7 @@
 
 **Reliability-Driven Probabilistic Time-Series Forecasting with Interleaved Supports**
 
-Anonymous code release for review.
+Code and reproducibility materials for OepfTSF (ICDE 2027).
 
 ## Overview
 
@@ -55,8 +55,8 @@ bash scripts/OepfTSF/ETTh1.sh
 
 The script launches training and then evaluates the selected model on the test
 split. Standard output is written under `logs/ema/`; error messages remain in
-the terminal. The script uses an input length of **512**, a prediction length
-of **96**, batch size **1024**, learning rate **0.0002**, up to **100** epochs,
+the terminal. The script uses an input length of **720**, a prediction length
+of **96**, batch size **512**, learning rate **0.0001**, up to **100** epochs,
 and early-stopping patience **15**. The random seed in `run.py` is **2021**.
 These values describe the bundled code and script.
 
