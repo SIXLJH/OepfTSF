@@ -1,0 +1,7 @@
+# Import dependencies only; not an exact lock of the experiment environment.
+# Retain your original package versions for reproducing existing results.
+torch
+numpy
+pandas
+scikit-learn
+matplotlib

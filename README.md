@@ -1,59 +1,103 @@
-
 # OepfTSF
 
-**OepfTSF: Reliability-Driven Probabilistic Time-Series Forecasting with Interleaved Supports**
+**Reliability-Driven Probabilistic Time-Series Forecasting with Interleaved Supports**
 
-Research repository for our paper prepared for **IEEE ICDE 2027**.
+Anonymous code release for review.
 
 ## Overview
 
-OepfTSF is a reliability-driven probabilistic framework for long-term time-series forecasting. It addresses the challenge of combining competing predictive hypotheses whose reliability may vary across inputs and forecast horizons.
+OepfTSF combines history normalization, temporal decomposition, predictions on
+interleaved discrete supports, and reliability-based fusion for time-series
+forecasting. This package contains the model, data loaders, training loop,
+MSE/MAE evaluation, and an ETTh1 launch script.
 
-The framework constructs complementary predictive distributions on interleaved discrete supports and integrates them through a closed-form reliability allocation mechanism.
+## Installation
 
-The main components include:
+Use the original experiment environment when reproducing existing runs. The
+dependency list below contains the packages imported by the code; it is not a
+record of the original experiment's exact package versions.
 
-- **Interleaved Probabilistic Supports:** Two fine-resolution forecasting heads learn distributions over complementary discrete support grids.
-- **Reliability-Driven Allocation:** Predictive entropy, hypothesis disagreement, and horizon-dependent sharpening jointly determine adaptive fusion weights.
-- **Coherent Probabilistic Fusion:** The two predictive distributions are combined on a shared union support to produce point forecasts and prediction intervals.
-- **Joint Training:** Distributional supervision, within-resolution consistency, and cross-scale alignment improve forecasting reliability.
+For a new environment:
 
-## Model Architecture
+```bash
+python -m pip install -r requirements.txt
+```
 
-![OepfTSF Architecture](model.png)
+Install a PyTorch build appropriate for your device. The provided launch script
+requests bfloat16 AMP on CUDA; this setting requires suitable hardware and a
+compatible PyTorch installation. `run.py` selects CPU automatically when CUDA
+is unavailable, and the training loop disables AMP on CPU.
 
-The framework contains four independently parameterized forecasting heads during training. Two fine-resolution heads are retained for inference, while two coarse-resolution heads provide auxiliary regularization.
+Some optional data-loading paths use the older pandas positional `drop` API.
+Use pandas 1.x for those paths. Retain the original package versions and device
+settings when comparing results from existing experiments.
 
-## Experimental Evaluation
+## Data preparation
 
-We evaluate OepfTSF on seven widely used time-series forecasting benchmarks:
+Dataset files are not included. Place `ETTh1.csv` at:
 
-- ETTh1
-- ETTh2
-- ETTm1
-- ETTm2
-- Weather
-- Electricity
-- Traffic
+```text
+dataset/ETT-small/ETTh1.csv
+```
 
-The main forecasting experiments use:
+The CSV must contain a `date` column followed by the seven numeric ETTh1
+variables. Keep the original timestamps, column order, and values.
+See [dataset/README.md](dataset/README.md) for other supported input formats.
 
-- Lookback length: 720
-- Prediction horizons: 96, 192, 336, 720
-- Support locations per head: 25
-- Default support range: [-4, 4]
+## Training and evaluation
 
-The evaluation includes point forecasting accuracy, probabilistic forecasting quality, controlled ablation studies, support robustness, and computational efficiency.
+Run commands from the repository root. On Linux, macOS, or a Bash-compatible
+environment:
 
-## Code and Reproducibility
+```bash
+bash scripts/OepfTSF/ETTh1.sh
+```
 
-The repository is being organized for reproducibility.
+The script launches training and then evaluates the selected model on the test
+split. Standard output is written under `logs/ema/`; error messages remain in
+the terminal. The script uses an input length of **512**, a prediction length
+of **96**, batch size **1024**, learning rate **0.0002**, up to **100** epochs,
+and early-stopping patience **15**. The random seed in `run.py` is **2021**.
+These values describe the bundled code and script.
 
-Currently available:
-- Model architecture illustration (`model.png`)
+For command-line options:
 
-Training and evaluation code, environment requirements, and reproduction instructions will be documented here as they become available.
+```bash
+python run.py --help
+```
 
-## Citation
+Keep the same command-line arguments, data, package versions, and hardware
+settings when comparing with previous runs. `run.py` defaults and the bundled
+shell script specify different values for several training options; use the
+same launch command as the experiment being compared.
 
-Citation information will be updated when available.
+## Outputs
+
+| Path | Content |
+| --- | --- |
+| `logs/ema/` | Training output from the ETTh1 shell script |
+| `Checkpoints/` | Temporary training checkpoints by default |
+| `test_results/` | Forecast plots generated during testing |
+| `result.txt` | Appended MSE and MAE summaries |
+
+The existing training loop reloads its best checkpoint and then removes that
+checkpoint file. Evaluation immediately following training uses the model
+already loaded in memory. Standalone evaluation with `--is_training 0` expects
+a separately retained checkpoint at `checkpoints/<setting>/checkpoint.pth`;
+this path is lowercase and differs from the default training directory.
+
+## Code layout
+
+| Path | Purpose |
+| --- | --- |
+| `run.py` | Argument parsing and experiment entry point |
+| `models/OepfTSF.py` | Forecasting model and support-based fusion |
+| `layers/` | Normalization, decomposition, and prediction networks |
+| `data_provider/` | Dataset loading and batching |
+| `exp/` | Optimization, validation, and evaluation |
+| `scripts/OepfTSF/ETTh1.sh` | ETTh1 launch configuration |
+| `utils/` | Metrics, time features, learning-rate schedule, and plotting |
+| `dataset/` | Local dataset placement |
+
+The architecture figure already present in the repository can remain at the
+repository root as `model.png`.
